@@ -1,0 +1,65 @@
+Tool: NSight tool Version: 2019.3.0
+GPU : Tesla P40.
+
+Nsight Command: nv-nsight-cu-cli --section MemoryWorkloadAnalysis_Chart -f -o <output-file> <executable>
+
+We have added the cuda source files as well just if you need them:
+Source file: fine_grain_tlb.cu
+
+This program takes 3 input arguments.
+First : Starting size of array in MBs
+Second: End size of array in MBs
+Third : Stride size in KBs
+
+For each array size in range of start and end, the program traverses
+at strides, and records time taken for each access.
+
+Compilation command:
+$> nvcc -Xptxas -dlcm=cs -arch=sm_61 -lineinfo src/fine_grain_tlb.cu -o cs_original
+(Hoping that the L2 level of cache is also disabled, so that all requests go to device memory)
+
+nv-nsight-cu-cli --section MemoryWorkloadAnalysis_Chart -f -o <output-file> <executable>
+The output files for this are:
+cs_xx_yy.nsight-cuprof-report
+eg $> ./cs_original 512 512 32768 => cs_512_32.pdf
+
+Doing some googling, we found an alternative to this by setting an environment variable that
+needs to be set during compilation:
+export CUDA_CACHE_DISABLE=1
+$> nvcc -arch=sm_61 -lineinfo src/fine_grain_tlb.cu -o cache_disabled
+
+The outputs generated after running the above executable
+c_disabled_xx_yy.nsight-cuprof-report
+eg. $> ./cache_disabled 512 512 32768 => c_disabled_512_32.pdf
+
+[Based on the above program, we felt that the environment variable is not performing as expected!]
+
+===================================================================================================
+We conducted another experiment for pinning the pages in host memory (DRAM).
+
+Source file: host_alloc.cu
+
+This file takes 4 arguments:
+First  : Starting array size in MB
+Second : End array size in MB
+Third  : Stride size in KB
+Fourth : Device number to set (if multiple devices are available)
+
+It follows the same principle as of above program but creates memory in host pinned (cudaHostAlloc)
+and provide with a single flag, 'cudaHostAllocMapped' to the function.
+
+Compliation command:
+$> nvcc -Xptxas -dlcm=cs -arch=sm_61 -lineinfo src/host_alloc.cu -o host_pinned
+(Again hoping that L2 cache is disabled)
+
+The output files for this are:
+cs_host_xx_yy.nsight-cuprof-report. There are 2 kernels in this code.
+So each run generates 2 files.
+
+eg. $> ./host_pinned 512 512 32768 0 => cs_host_init_512_32.pdf
+                                        cs_host_global_512_32.pdf
+
+In the NSight report we see that there are memory accesses to DRAM and not to Host Memory, it says
+(!) mark over host memory., which is something not understandable.
+
+===================================================================================================
