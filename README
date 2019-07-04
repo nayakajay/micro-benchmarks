@@ -1,8 +1,11 @@
-Tool: NSight tool Version: 2019.3.0
-GPU : Tesla P40.
+Tool  : NSight tool Version: 2019.3.0
+GPU   : Tesla P40.
+NVCC  : release 10.1, V10.1.168
+Driver: 418.67
 
-Nsight Command: nv-nsight-cu-cli --section MemoryWorkloadAnalysis_Chart -f -o <output-file> <executable>
+Nsight Command: nv-nsight-cu-cli --section MemoryWorkloadAnalysis.* -f -o <output-file> <executable>
 
+===================================================================================================
 We have added the cuda source files as well just if you need them:
 Source file: fine_grain_tlb.cu
 
