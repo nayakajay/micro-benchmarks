@@ -1,6 +1,6 @@
 # Straight commands to create runnables
 CUDA_CC=nvcc
-CUDA_FLAGS=-Xptxas -dlcm=cs -arch=sm_61 -lineinfo
+CUDA_FLAGS=-Xptxas -dlcm=cs -Xptxas -dscm=cs -arch=sm_61 -lineinfo
 
 all: device_alloc host_alloc
 # Executable that creates an array and traverses it, Array allocated in device

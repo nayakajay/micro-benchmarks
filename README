@@ -24,18 +24,13 @@ $> nvcc -Xptxas -dlcm=cs -arch=sm_61 -lineinfo src/fine_grain_tlb.cu -o cs_origi
 nv-nsight-cu-cli --section MemoryWorkloadAnalysis_Chart -f -o <output-file> <executable>
 The output files for this are:
 cs_xx_yy.nsight-cuprof-report
-eg $> ./cs_original 512 512 32768 => cs_512_32.pdf
+eg $> ./cs_original 512 512 32768 => cs_all_512_32.pdf
 
-Doing some googling, we found an alternative to this by setting an environment variable that
-needs to be set during compilation:
-export CUDA_CACHE_DISABLE=1
-$> nvcc -arch=sm_61 -lineinfo src/fine_grain_tlb.cu -o cache_disabled
-
-The outputs generated after running the above executable
-c_disabled_xx_yy.nsight-cuprof-report
-eg. $> ./cache_disabled 512 512 32768 => c_disabled_512_32.pdf
-
-[Based on the above program, we felt that the environment variable is not performing as expected!]
+Discrepancy Observed:
+1. Most probably the writes are getting cached to L2, as Nsight does not represent cached/uncached
+stores, it just represents 'Global Stores'.
+2. When data is collected only Chart section, we see 100% L2 Hit rate (surprising), but when all
+MemoryWorlkloadAnalysis.* is run the hit rate decreases, but is still quite high.
 
 ===================================================================================================
 We conducted another experiment for pinning the pages in host memory (DRAM).
@@ -59,10 +54,16 @@ The output files for this are:
 cs_host_xx_yy.nsight-cuprof-report. There are 2 kernels in this code.
 So each run generates 2 files.
 
-eg. $> ./host_pinned 512 512 32768 0 => cs_host_init_512_32.pdf
-                                        cs_host_global_512_32.pdf
+eg. $> ./host_pinned 512 512 32768 0 => cs_all_host_initk_512_32.pdf
+                                        cs_all_host_global_512_32.pdf
 
 In the NSight report we see that there are memory accesses to DRAM and not to Host Memory, it says
 (!) mark over host memory., which is something not understandable.
+
+Discrepancy Observed:
+1. Init kernel shows only 1 instruction, but there are atleast 16 loads (incase of 512M array with
+32M strides.)
+2. If data is pinned to host, the device memory should not have been used, but we see quite a bit
+of usage of device memory.
 
 ===================================================================================================
