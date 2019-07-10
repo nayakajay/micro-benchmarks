@@ -12,7 +12,7 @@ void add(int n, float *x, float *y, float *z)
 }
 
 int main() {
-    int N = 1<<20;
+    int N = 1<<10;
     float *x, *y, *z, *d_x, *d_y, *d_z;
 
     cudaDeviceReset();
