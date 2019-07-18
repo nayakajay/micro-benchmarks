@@ -1,17 +1,20 @@
-# Straight commands to create runnables
-CUDA_CC=nvcc
-CUDA_FLAGS=-Xptxas -dlcm=cs -Xptxas -dscm=cs -arch=sm_61 -lineinfo
-VECTOR_CUDA_FLAGS=-Xptxas -O0 -Xptxas -dlcm=cg -Xptxas -dscm=wt -arch=sm_61
+include ../../common/make.config
 
-all: device_alloc host_alloc vector_add
-# Executable that creates an array and traverses it, Array allocated in device
-device_alloc:
-	$(CUDA_CC) $(CUDA_FLAGS) src/fine_grain_tlb.cu -o cs_original
+LOCAL_CC = gcc -g -O3 -Wall
+CC := $(CUDA_DIR)/bin/nvcc
 
-# Similar experiment, but memory pinned in host
-host_alloc:
-	$(CUDA_CC) $(CUDA_FLAGS) src/host_alloc.cu -o host_pinned
+all : nn hurricane_gen
 
-# Shweta vector addition
-vector_add:
-	$(CUDA_CC) $(VECTOR_CUDA_FLAGS) src/vector_add.cu -o vector_add
+clean :
+	rm -rf *.o nn hurricane_gen
+
+nn : nn_cuda.cu
+	$(CC) -Xptxas -O0 -Xptxas -dlcm=cg -Xptxas -dscm=wb  -cuda nn_cuda.cu
+	$(CC)  -Xptxas -O0 -Xptxas -dlcm=cg -Xptxas -dscm=wb -o nn nn_cuda.cu
+
+hurricane_gen : hurricane_gen.c
+	$(LOCAL_CC)  -o $@ $< -lm
+
+#data :
+#	mkdir data
+#	./gen_dataset.sh
