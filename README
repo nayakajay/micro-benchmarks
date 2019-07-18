@@ -2,6 +2,7 @@ Tool  : NSight tool Version: 2019.3.0
 GPU   : Tesla P40.
 NVCC  : release 10.1, V10.1.168
 Driver: 418.67
+OS    : Ubuntu 16.04.4 LTS
 
 Nsight Command: nv-nsight-cu-cli --section MemoryWorkloadAnalysis.* -f -o <output-file> <executable>
 
